@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actibot Evaluation UI</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section {
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        .section h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: var(--text-muted);
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.success {
+            background: var(--success);
+        }
+
+        button.success:hover {
+            background: #059669;
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        button.danger:hover {
+            background: #dc2626;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-family: monospace;
+            text-align: center;
+            margin: 2rem 0;
+            color: var(--text);
+            text-shadow: 0 0 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .scoring {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .scoring-radios {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .scoring.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.125rem;
+            cursor: pointer;
+        }
+
+        .radio-label input {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+
+        #current-episode-label {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #818cf8;
+            margin-bottom: -1rem;
+        }
+
+        .finish-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px dashed var(--border);
+        }
+
+        button.finish {
+            background: var(--primary);
+        }
+
+        button.finish:hover {
+            background: var(--primary-hover);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Actibot Evaluation</h1>
+
+        <div class="section">
+            <h2>1. Setup Task</h2>
+            <div class="flex-row">
+                <input type="text" id="task-name" placeholder="Enter Task Name (e.g., pick_apple)">
+                <button onclick="createTask()">Create / Load Task</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>2. Global Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Episodes</div>
+                    <div class="stat-value" id="stat-total">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Success Rate</div>
+                    <div class="stat-value" id="stat-sr">0.0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>3. Episode Recorder</h2>
+            <div id="current-episode-label">Pending...</div>
+            <div class="timer-display" id="timer">00:00.00</div>
+
+            <div class="controls">
+                <button class="success" id="btn-start" onclick="startEpisode()" disabled>Start Episode</button>
+                <button class="danger" id="btn-stop" onclick="stopEpisode()" disabled>Stop Episode</button>
+            </div>
+
+            <div class="scoring" id="scoring-section">
+                <div class="scoring-radios">
+                    <label class="radio-label">
+                        <input type="radio" name="score" value="1"> 1 - Success
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="score" value="0"> 0 - Fail
+                    </label>
+                </div>
+                <button class="success" id="btn-save" onclick="saveEpisode()">Save Episode</button>
+            </div>
+
+            <div class="finish-container">
+                <button class="finish" id="btn-finish" onclick="finishTask()" disabled>Finish Task & Export
+                    Summary</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTask = null;
+        let currentIndex = 1;
+        let startTime = 0;
+        let timerInterval = null;
+        let pDuration = 0.0;
+        let isRecording = false;
+        let needsScoring = false;
+
+        const elTaskName = document.getElementById('task-name');
+        const elTimer = document.getElementById('timer');
+        const btnStart = document.getElementById('btn-start');
+        const btnStop = document.getElementById('btn-stop');
+        const btnFinish = document.getElementById('btn-finish');
+        const elScoring = document.getElementById('scoring-section');
+        const radios = document.getElementsByName('score');
+
+        async function createTask() {
+            const name = elTaskName.value.trim();
+            if (!name) {
+                alert("Please enter a task name.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/create_task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_name: name })
+                });
+
+                if (res.ok) {
+                    currentTask = name;
+                    btnStart.disabled = false;
+                    btnFinish.disabled = false;
+                    elTaskName.disabled = true;
+                    await refreshStats();
+                } else {
+                    const data = await res.json();
+                    alert("Error: " + data.detail);
+                }
+            } catch (err) {
+                alert("Server connection failed.");
+            }
+        }
+
+        async function refreshStats() {
+            if (!currentTask) return;
+            const res = await fetch(`/stats/${currentTask}`);
+            const data = await res.json();
+
+            document.getElementById('stat-total').innerText = data.total_num;
+            document.getElementById('stat-sr').innerText = (data.success_rate * 100).toFixed(1) + '%';
+
+            if (!isRecording && !needsScoring) {
+                currentIndex = data.next_index;
+                document.getElementById('current-episode-label').innerText = `Episode #${currentIndex}`;
+            }
+        }
+
+        function updateTimer() {
+            const now = Date.now();
+            const diff = now - startTime;
+            const ms = Math.floor((diff % 1000) / 10);
+            const seconds = Math.floor((diff / 1000) % 60);
+            const minutes = Math.floor(diff / 60000);
+
+            elTimer.innerText =
+                String(minutes).padStart(2, '0') + ':' +
+                String(seconds).padStart(2, '0') + '.' +
+                String(ms).padStart(2, '0');
+        }
+
+        async function startEpisode() {
+            // Start new recording
+            isRecording = true;
+            needsScoring = false;
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            elScoring.classList.remove('active');
+            clearRadioButtons();
+
+            startTime = Date.now();
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 10);
+        }
+
+        function stopEpisode() {
+            if (!isRecording) return;
+
+            clearInterval(timerInterval);
+            isRecording = false;
+            needsScoring = true;
+
+            const endTime = Date.now();
+            pDuration = (endTime - startTime) / 1000; // in seconds
+
+            btnStop.disabled = true;
+            btnStart.disabled = true;
+
+            // Enable scoring buttons
+            elScoring.classList.add('active');
+        }
+
+        async function saveEpisode() {
+            if (!needsScoring) return;
+
+            let selectedScore = getSelectedScore();
+            if (selectedScore === null) {
+                alert("未选择分数，默认记为 0 分 (Fail)!");
+                selectedScore = 0;
+            }
+
+            const btnSave = document.getElementById('btn-save');
+            btnSave.disabled = true;
+            await submitEpisodeScore(selectedScore);
+            btnSave.disabled = false;
+        }
+
+        function getSelectedScore() {
+            for (const radio of radios) {
+                if (radio.checked) return parseInt(radio.value);
+            }
+            return null;
+        }
+
+        function clearRadioButtons() {
+            for (const radio of radios) {
+                radio.checked = false;
+            }
+        }
+
+        async function submitEpisodeScore(score) {
+            const payload = {
+                task_name: currentTask,
+                index: currentIndex,
+                success_score: score,
+                duration: pDuration,
+                ps: null // TODO
+            };
+
+            try {
+                const res = await fetch('/save_episode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    needsScoring = false;
+                    btnStart.disabled = false;
+                    elScoring.classList.remove('active');
+                    clearRadioButtons();
+                    elTimer.innerText = "00:00.00";
+                    await refreshStats(); // Gets next index
+                } else {
+                    alert("Failed to save episode.");
+                }
+            } catch (err) {
+                alert("Server error when saving episode.");
+            }
+        }
+
+        async function finishTask() {
+            if (!currentTask) return;
+
+            if (needsScoring) {
+                // Determine if user has selected a score before finishing
+                let selectedScore = getSelectedScore();
+                if (selectedScore === null) {
+                    alert("有未评分的一集，默认记为 0 分 (Fail)!");
+                    selectedScore = 0;
+                }
+                await submitEpisodeScore(selectedScore);
+            }
+
+            try {
+                const res = await fetch('/finish_task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_name: currentTask })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`任务已结束！\n生成了 summary.json。\nTotal: ${data.summary.total_episodes}\nSuccess Rate: ${(data.summary.success_rate * 100).toFixed(1)}%`);
+                } else {
+                    alert("Failed to finish task.");
+                }
+            } catch (err) {
+                alert("Server error when finishing task.");
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,11 @@
+# Python environments and cache
+__pycache__/
+venv/
+env/
+.env
+
+# Ignore all dynamic task directories
+*/
+
+# But keep the necessary application directories
+!static/
