@@ -62,4 +62,4 @@ chmod +x run.sh
 ```
 
 You will see output indicating the server has started.
-Open **<http://127.0.0.1:8001/static/index.html>** in your preferred browser to use the dashboard!
+Open **<http://127.0.0.1:{port}/static/index.html>** in your preferred browser to use the dashboard!
