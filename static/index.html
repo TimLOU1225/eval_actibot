@@ -464,7 +464,13 @@
 
                 if (res.ok) {
                     const data = await res.json();
-                    alert(`任务已结束！\n生成了 summary.json。\nTotal: ${data.summary.total_episodes}\nSuccess Rate: ${(data.summary.success_rate * 100).toFixed(1)}%`);
+                    let msg = `任务已结束！\n生成了 summary.json。\n\n`;
+                    msg += `Total: ${data.summary.total_episodes}\n`;
+                    msg += `Success Rate: ${(data.summary.success_rate * 100).toFixed(1)}%\n`;
+                    msg += `Avg Duration: ${data.summary.avg_duration}s\n`;
+                    msg += `Avg Success Duration: ${data.summary.avg_success_duration}s\n`;
+                    msg += `Avg Fail Duration: ${data.summary.avg_fail_duration}s`;
+                    alert(msg);
                 } else {
                     alert("Failed to finish task.");
                 }

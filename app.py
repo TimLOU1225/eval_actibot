@@ -116,12 +116,43 @@ async def finish_task(data: TaskFinish):
         results = []
         
     total_num = len(results)
-    success_count = sum(1 for ep in results if ep.get("success_score") == 1)
+    
+    success_count = 0
+    total_duration = 0.0
+    success_duration = 0.0
+    fail_duration = 0.0
+    
+    max_consecutive_successes = 0
+    current_consecutive_successes = 0
+
+    for ep in results:
+        score = ep.get("success_score", 0)
+        dur = ep.get("duration", 0.0)
+        
+        total_duration += dur
+        if score == 1:
+            success_count += 1
+            success_duration += dur
+            current_consecutive_successes += 1
+            if current_consecutive_successes > max_consecutive_successes:
+                max_consecutive_successes = current_consecutive_successes
+        else:
+            fail_duration += dur
+            current_consecutive_successes = 0
+
     success_rate = success_count / total_num if total_num > 0 else 0.0
+    avg_duration = total_duration / total_num if total_num > 0 else 0.0
+    avg_success_duration = success_duration / success_count if success_count > 0 else 0.0
+    fail_count = total_num - success_count
+    avg_fail_duration = fail_duration / fail_count if fail_count > 0 else 0.0
     
     summary = {
         "total_episodes": total_num,
-        "success_rate": success_rate
+        "success_rate": round(success_rate, 4),
+        "avg_duration": round(avg_duration, 2),
+        "avg_success_duration": round(avg_success_duration, 2),
+        "avg_fail_duration": round(avg_fail_duration, 2),
+        "max_consecutive_successes": max_consecutive_successes
     }
     
     summary_file = os.path.join(task_dir, "summary.json")
